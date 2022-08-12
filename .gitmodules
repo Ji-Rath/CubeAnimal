@@ -1,0 +1,3 @@
+[submodule "Plugins/AINodes"]
+	path = Plugins/AINodes
+	url = https://github.com/Ji-Rath/AINodes
