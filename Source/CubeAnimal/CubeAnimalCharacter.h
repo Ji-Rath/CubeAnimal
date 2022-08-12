@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Character.h"
 #include "CubeAnimalCharacter.generated.h"
 
 UCLASS(config=Game)
-class ACubeAnimalCharacter : public ACharacter
+class ACubeAnimalCharacter : public ACharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -61,5 +62,10 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGenericTeamId TeamId;
+	
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
 };
 
