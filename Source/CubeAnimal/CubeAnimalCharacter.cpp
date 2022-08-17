@@ -1,6 +1,11 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CubeAnimalCharacter.h"
+
+#include "AbilitySystemComponent.h"
+#include "AttributeSetBase.h"
+#include "GameplayEffectTypes.h"
+#include "Abilities/Tasks/AbilityTask.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -49,6 +54,9 @@ ACubeAnimalCharacter::ACubeAnimalCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("Ability System"));
+	AttributeSetBase = CreateDefaultSubobject<UAttributeSetBase>(TEXT("Attribute Set"));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -77,6 +85,11 @@ void ACubeAnimalCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindTouch(IE_Released, this, &ACubeAnimalCharacter::TouchStopped);
 }
 
+UAbilitySystemComponent* ACubeAnimalCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
 void ACubeAnimalCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
 	Jump();
@@ -97,6 +110,13 @@ void ACubeAnimalCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
+}
+
+void ACubeAnimalCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	InitializeAttributes();
 }
 
 void ACubeAnimalCharacter::MoveForward(float Value)
@@ -126,4 +146,118 @@ void ACubeAnimalCharacter::MoveRight(float Value)
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+void ACubeAnimalCharacter::InitializeAttributes()
+{
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	if (!DefaultAttributes)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s() Missing DefaultAttributes for %s. Please fill in the character's Blueprint."), *FString(__FUNCTION__), *GetName());
+		return;
+	}
+
+	// Can run on Server and Client
+	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+	EffectContext.AddSourceObject(this);
+
+	FGameplayEffectSpecHandle NewHandle = AbilitySystemComponent->MakeOutgoingSpec(DefaultAttributes, GetCharacterLevel(), EffectContext);
+	if (NewHandle.IsValid())
+	{
+		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*NewHandle.Data.Get(), AbilitySystemComponent);
+	}
+}
+
+int32 ACubeAnimalCharacter::GetCharacterLevel() const
+{
+	if (AttributeSetBase)
+	{
+		return static_cast<int32>(AttributeSetBase->GetCharacterLevel());
+	}
+
+	return 0;
+}
+
+float ACubeAnimalCharacter::GetHealth() const
+{
+	if (AttributeSetBase)
+	{
+		return AttributeSetBase->GetHealth();
+	}
+
+	return 0.0f;
+}
+
+float ACubeAnimalCharacter::GetMaxHealth() const
+{
+	if (AttributeSetBase)
+	{
+		return AttributeSetBase->GetMaxHealth();
+	}
+
+	return 0.0f;
+}
+
+float ACubeAnimalCharacter::GetMana() const
+{
+	if (AttributeSetBase)
+	{
+		return AttributeSetBase->GetMana();
+	}
+
+	return 0.0f;
+}
+
+float ACubeAnimalCharacter::GetMaxMana() const
+{
+	if (AttributeSetBase)
+	{
+		return AttributeSetBase->GetMaxMana();
+	}
+
+	return 0.0f;
+}
+
+float ACubeAnimalCharacter::GetStamina() const
+{
+	if (AttributeSetBase)
+	{
+		return AttributeSetBase->GetStamina();
+	}
+
+	return 0.0f;
+}
+
+float ACubeAnimalCharacter::GetMaxStamina() const
+{
+	if (AttributeSetBase)
+	{
+		return AttributeSetBase->GetMaxStamina();
+	}
+
+	return 0.0f;
+}
+
+float ACubeAnimalCharacter::GetMoveSpeed() const
+{
+	if (AttributeSetBase)
+	{
+		return AttributeSetBase->GetMoveSpeed();
+	}
+
+	return 0.0f;
+}
+
+float ACubeAnimalCharacter::GetMoveSpeedBaseValue() const
+{
+	if (AttributeSetBase)
+	{
+		return AttributeSetBase->GetMoveSpeedAttribute().GetGameplayAttributeData(AttributeSetBase.Get())->GetBaseValue();
+	}
+
+	return 0.0f;
 }

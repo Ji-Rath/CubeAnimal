@@ -3,12 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "GenericTeamAgentInterface.h"
 #include "GameFramework/Character.h"
 #include "CubeAnimalCharacter.generated.h"
 
+class UAttributeSetBase;
+class UAbilitySystemComponent;
+
 UCLASS(config=Game)
-class ACubeAnimalCharacter : public ACharacter, public IGenericTeamAgentInterface
+class ACubeAnimalCharacter : public ACharacter, public IGenericTeamAgentInterface, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -26,6 +30,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
 	float TurnRateGamepad;
 
+	virtual void BeginPlay() override;
+
 protected:
 
 	/** Called for forwards/backward input */
@@ -33,6 +39,28 @@ protected:
 
 	/** Called for side to side input */
 	void MoveRight(float Value);
+	
+	void InitializeAttributes();
+	
+	UFUNCTION(BlueprintCallable)
+	int32 GetCharacterLevel() const;
+	UFUNCTION(BlueprintCallable)
+	float GetHealth() const;
+	UFUNCTION(BlueprintCallable)
+	float GetMaxHealth() const;
+	UFUNCTION(BlueprintCallable)
+	float GetMana() const;
+	UFUNCTION(BlueprintCallable)
+	float GetMaxMana() const;
+	UFUNCTION(BlueprintCallable)
+	float GetStamina() const;
+	UFUNCTION(BlueprintCallable)
+	float GetMaxStamina() const;
+	UFUNCTION(BlueprintCallable)
+	float GetMoveSpeed() const;
+	UFUNCTION(BlueprintCallable)
+	float GetMoveSpeedBaseValue() const;
+	UFUNCTION(BlueprintCallable)
 
 	/** 
 	 * Called via input to turn at a given rate. 
@@ -67,5 +95,17 @@ public:
 	FGenericTeamId TeamId;
 	
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
+
+	UPROPERTY()
+	UAbilitySystemComponent* AbilitySystemComponent;
+
+	UPROPERTY()
+	TObjectPtr<UAttributeSetBase> AttributeSetBase;
+
+	// This is an instant GE that overrides the values for attributes that get reset on spawn/respawn.
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
+	TSubclassOf<class UGameplayEffect> DefaultAttributes;
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 };
 
