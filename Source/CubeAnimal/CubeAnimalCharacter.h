@@ -8,6 +8,8 @@
 #include "GameFramework/Character.h"
 #include "CubeAnimalCharacter.generated.h"
 
+class UCubeGameplayAbility;
+class UGameplayAbility;
 class UAttributeSetBase;
 class UAbilitySystemComponent;
 
@@ -23,8 +25,12 @@ class ACubeAnimalCharacter : public ACharacter, public IGenericTeamAgentInterfac
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+	
 public:
 	ACubeAnimalCharacter();
+
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<UCubeGameplayAbility>> CharacterAbilities;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
@@ -60,7 +66,9 @@ protected:
 	float GetMoveSpeed() const;
 	UFUNCTION(BlueprintCallable)
 	float GetMoveSpeedBaseValue() const;
-	UFUNCTION(BlueprintCallable)
+	
+	void AddCharacterAbilities();
+	void BindASCInput();
 
 	/** 
 	 * Called via input to turn at a given rate. 
@@ -96,7 +104,7 @@ public:
 	
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	UAbilitySystemComponent* AbilitySystemComponent;
 
 	UPROPERTY()

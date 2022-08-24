@@ -4,6 +4,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AttributeSetBase.h"
+#include "CubeGameplayAbility.h"
 #include "GameplayEffectTypes.h"
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Camera/CameraComponent.h"
@@ -117,6 +118,8 @@ void ACubeAnimalCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	InitializeAttributes();
+	AddCharacterAbilities();
+	BindASCInput();
 }
 
 void ACubeAnimalCharacter::MoveForward(float Value)
@@ -260,4 +263,27 @@ float ACubeAnimalCharacter::GetMoveSpeedBaseValue() const
 	}
 
 	return 0.0f;
+}
+
+void ACubeAnimalCharacter::AddCharacterAbilities()
+{
+	// Grant abilities, but only on the server	
+	if (GetLocalRole() != ROLE_Authority || !AbilitySystemComponent)
+	{
+		return;
+	}
+	for (TSubclassOf<UCubeGameplayAbility>& StartupAbility : CharacterAbilities)
+	{
+		AbilitySystemComponent->GiveAbility(
+			FGameplayAbilitySpec(StartupAbility, 1, static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this));
+	} 
+}
+
+void ACubeAnimalCharacter::BindASCInput()
+{
+	if (AbilitySystemComponent && IsValid(InputComponent))
+	{
+		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, FGameplayAbilityInputBinds(FString("ConfirmTarget"),
+			FString("CancelTarget"), FString("EGDAbilityInputID"), static_cast<int32>(EGDAbilityInputID::Confirm), static_cast<int32>(EGDAbilityInputID::Cancel)));
+	}
 }
