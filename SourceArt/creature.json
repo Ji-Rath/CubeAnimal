@@ -260,7 +260,7 @@
       }
     }
   },
-  "unreal_animation_folder_path": "/Game/Characters/AnimalCharacter/",
+  "unreal_animation_folder_path": "/Game/Characters/AnimalCharacter/Animations/",
   "unreal_mesh_folder_path": "/Game/Characters/AnimalCharacter/",
   "unreal_physics_asset_path": "",
   "unreal_skeletal_mesh_lod_settings_path": "",
