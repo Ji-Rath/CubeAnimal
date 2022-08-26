@@ -274,8 +274,12 @@ void ACubeAnimalCharacter::AddCharacterAbilities()
 	}
 	for (TSubclassOf<UCubeGameplayAbility>& StartupAbility : CharacterAbilities)
 	{
-		AbilitySystemComponent->GiveAbility(
-			FGameplayAbilitySpec(StartupAbility, 1, static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this));
+		EGDAbilityInputID InputID = StartupAbility.GetDefaultObject()->AbilityInputID;
+		FGameplayAbilitySpecHandle SpecHandle;
+		SpecHandle = AbilitySystemComponent->GiveAbility(
+			FGameplayAbilitySpec(StartupAbility, 1, static_cast<int32>(InputID), this));
+		
+		AbilityHandles.Add(InputID, SpecHandle);
 	} 
 }
 

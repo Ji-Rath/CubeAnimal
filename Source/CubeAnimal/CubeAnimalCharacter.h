@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayAbilitySpec.h"
+#include "GameplaySystemInfo.h"
 #include "GenericTeamAgentInterface.h"
 #include "GameFramework/Character.h"
 #include "CubeAnimalCharacter.generated.h"
@@ -66,6 +68,9 @@ protected:
 	float GetMoveSpeed() const;
 	UFUNCTION(BlueprintCallable)
 	float GetMoveSpeedBaseValue() const;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TMap<TEnumAsByte<EGDAbilityInputID>, FGameplayAbilitySpecHandle> AbilityHandles;
 	
 	void AddCharacterAbilities();
 	void BindASCInput();
