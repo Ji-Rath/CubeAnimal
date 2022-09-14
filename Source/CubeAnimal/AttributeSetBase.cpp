@@ -3,6 +3,7 @@
 
 #include "AttributeSetBase.h"
 
+#include "GameplayEffectExtension.h"
 #include "Net/UnrealNetwork.h"
 
 void UAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -27,6 +28,46 @@ void UAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UAttributeSetBase, GoldBounty, COND_None, REPNOTIFY_Always);
 }
 
+void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+
+	FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
+	UAbilitySystemComponent* Source = Context.GetOriginalInstigatorAbilitySystemComponent();
+	//const FGameplayTagContainer& SourceTags = *Data.EffectSpec.CapturedSourceTags.GetAggregatedTags();
+	
+	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
+	{
+		// Store a local copy of the amount of damage done and clear the damage attribute
+		const float LocalDamageDone = GetDamage();
+		SetDamage(0.f);
+
+		if (LocalDamageDone > 0)
+		{
+			// Apply the health change and then clamp it
+			const float OldHealth = GetHealth();
+			SetHealth(FMath::Clamp(OldHealth - LocalDamageDone, 0.0f, GetMaxHealth()));
+
+			AActor* TargetActor = Data.Target.AbilityActorInfo->OwnerActor.Get();
+			AController* SourceController = Source->AbilityActorInfo->PlayerController.Get();
+			AActor* SourceActor = Source->AbilityActorInfo->OwnerActor.Get();
+
+			if (TargetActor && SourceActor)
+				TargetActor->ReceiveAnyDamage(LocalDamageDone, nullptr, SourceController, SourceActor);
+		}
+	}
+	else if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		// Handle other health changes such as from healing or direct modifiers
+		// First clamp it
+		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
+	}
+	else if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
+	{
+		SetStamina(FMath::Clamp(GetStamina(), 0.0f, GetMaxStamina()));
+	}
+}
+
 void UAttributeSetBase::AdjustAttributeForMaxChange(FGameplayAttributeData & AffectedAttribute, const FGameplayAttributeData & MaxAttribute, float NewMaxValue, const FGameplayAttribute & AffectedAttributeProperty)
 {
 	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
@@ -48,9 +89,9 @@ void UAttributeSetBase::PreAttributeChange(const FGameplayAttribute& Attribute, 
 
 	// If a Max value changes, adjust current to keep Current % of Current to Max
 	if (Attribute == GetMaxHealthAttribute()) // GetMaxHealthAttribute comes from the Macros defined at the top of the header
-		{
+	{
 		AdjustAttributeForMaxChange(Health, MaxHealth, NewValue, GetHealthAttribute());
-		}
+	}
 	else if (Attribute == GetMaxManaAttribute())
 	{
 		AdjustAttributeForMaxChange(Mana, MaxMana, NewValue, GetManaAttribute());
@@ -64,6 +105,7 @@ void UAttributeSetBase::PreAttributeChange(const FGameplayAttribute& Attribute, 
 		// Cannot slow less than 150 units/s and cannot boost more than 1000 units/s
 		NewValue = FMath::Clamp<float>(NewValue, 150, 1000);
 	}
+
 }
 
 void UAttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldHealth)

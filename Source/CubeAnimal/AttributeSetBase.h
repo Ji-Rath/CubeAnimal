@@ -28,6 +28,8 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
 	// Current Health, when 0 we expect owner to die unless prevented by an ability. Capped by MaxHealth.
 	// Positive changes can directly use this.
 	// Negative changes to Health should go through Damage meta attribute.
