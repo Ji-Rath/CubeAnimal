@@ -70,7 +70,7 @@ protected:
 	float GetMoveSpeedBaseValue() const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TMap<TEnumAsByte<EGDAbilityInputID>, FGameplayAbilitySpecHandle> AbilityHandles;
+	TMap<EGDAbilityInputID, FGameplayAbilitySpecHandle> AbilityHandles;
 	
 	void AddCharacterAbilities();
 	void BindASCInput();
