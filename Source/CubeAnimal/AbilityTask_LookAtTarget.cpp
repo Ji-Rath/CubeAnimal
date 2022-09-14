@@ -14,20 +14,20 @@ UAbilityTask_LookAtTarget::UAbilityTask_LookAtTarget(const FObjectInitializer& O
 	bSimulatedTask = true;
 }
  
-UAbilityTask_LookAtTarget* UAbilityTask_LookAtTarget::LookAtTarget(UGameplayAbility* OwningAbility, FName TaskInstanceName, AActor* LookAtTarget, float InterpSpeed, bool bRotatePitch)
+UAbilityTask_LookAtTarget* UAbilityTask_LookAtTarget::LookAtTarget(UGameplayAbility* OwningAbility, FName TaskInstanceName, AActor* LookAtTarget, float InterpSpeed, bool bRotatePitch, bool bEndOnFinish)
 {
 	UAbilityTask_LookAtTarget* MyObj = NewAbilityTask<UAbilityTask_LookAtTarget>(OwningAbility, TaskInstanceName);
 
 	MyObj->Target = LookAtTarget;
 	MyObj->BlendSpeed = InterpSpeed;
 	MyObj->bChangePitch = bRotatePitch;
+	MyObj->bEndTaskOnFinish = bEndOnFinish;
 
 	return MyObj;
 }
 
 void UAbilityTask_LookAtTarget::TickTask(float DeltaTime)
 {
-
 	Super::TickTask(DeltaTime);
 	AActor* MyActor = GetAvatarActor();
 	
@@ -36,7 +36,19 @@ void UAbilityTask_LookAtTarget::TickTask(float DeltaTime)
 		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(MyActor->GetActorLocation(), Target->GetActorLocation());
 		FRotator NewRotation = FMath::RInterpTo(Pawn->GetControlRotation(), Rotation, DeltaTime, BlendSpeed);
 		NewRotation.Pitch = bChangePitch ? NewRotation.Pitch : Pawn->GetControlRotation().Pitch;
-		Pawn->GetController()->SetControlRotation(NewRotation);
+
+		if (AController* Controller = Pawn->GetController())
+		{
+			Controller->SetControlRotation(NewRotation);
+
+			Rotation.Pitch = bChangePitch ? Rotation.Pitch : Pawn->GetControlRotation().Pitch;
+			if (bEndTaskOnFinish && Controller->GetControlRotation().Equals(Rotation))
+			{
+				OnLookAtComplete.Broadcast();
+				EndTask();
+			}
+		}
+		
 	}
 }
 
