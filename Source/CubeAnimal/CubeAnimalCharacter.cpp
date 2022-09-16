@@ -84,6 +84,8 @@ void ACubeAnimalCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &ACubeAnimalCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &ACubeAnimalCharacter::TouchStopped);
+
+	BindASCInput();
 }
 
 UAbilitySystemComponent* ACubeAnimalCharacter::GetAbilitySystemComponent() const
@@ -116,10 +118,23 @@ void ACubeAnimalCharacter::LookUpAtRate(float Rate)
 void ACubeAnimalCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+}
+
+void ACubeAnimalCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	BindASCInput();
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+}
+
+void ACubeAnimalCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
 	InitializeAttributes();
 	AddCharacterAbilities();
-	BindASCInput();
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
 void ACubeAnimalCharacter::MoveForward(float Value)

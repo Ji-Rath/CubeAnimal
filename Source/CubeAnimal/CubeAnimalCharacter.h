@@ -40,6 +40,11 @@ public:
 
 	virtual void BeginPlay() override;
 
+	// Client only
+	virtual void OnRep_PlayerState() override;
+
+	virtual void PossessedBy(AController* NewController) override;
+
 protected:
 
 	/** Called for forwards/backward input */
