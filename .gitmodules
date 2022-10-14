@@ -1,3 +1,9 @@
 [submodule "Plugins/AINodes"]
 	path = Plugins/AINodes
 	url = https://github.com/Ji-Rath/AINodes
+[submodule "Plugins/SpatialInventory"]
+	path = Plugins/SpatialInventory
+	url = https://github.com/Ji-Rath/SpatialInventory
+[submodule "Plugins/InteractSystem"]
+	path = Plugins/InteractSystem
+	url = https://github.com/Ji-Rath/UEInteractSystem
