@@ -60,6 +60,34 @@ ACubeAnimalCharacter::ACubeAnimalCharacter()
 	AttributeSetBase = CreateDefaultSubobject<UAttributeSetBase>(TEXT("Attribute Set"));
 }
 
+float ACubeAnimalCharacter::SignificanceFunction(USignificanceManager::FManagedObjectInfo* ObjectInfo,
+	const FTransform& Viewpoint)
+{
+	if(ObjectInfo->GetTag() == TEXT("Character"))
+	{
+		if (AActor* Character = Cast<AActor>(ObjectInfo->GetObject()))
+		{
+			const float Distance = (Character->GetActorLocation() - Viewpoint.GetLocation()).Size();
+			const float Dot = Viewpoint.GetRotation().GetForwardVector().Dot((Character->GetActorLocation() - Viewpoint.GetLocation()));
+
+			return GetSignificanceByDistance(Distance) * GetSignificanceByDot(Dot);
+		}
+	}
+
+	return 0.f;
+}
+
+void ACubeAnimalCharacter::PostSignificanceFunction(USignificanceManager::FManagedObjectInfo* ObjectInfo,
+	float OldSignificance, float Significance, bool bFinal)
+{
+	if (!IsValid(this)) { return; }
+	
+	if (ObjectInfo->GetTag() == TEXT("Character"))
+	{
+		PostSignificance(OldSignificance, Significance);
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -118,6 +146,65 @@ void ACubeAnimalCharacter::LookUpAtRate(float Rate)
 void ACubeAnimalCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!IsNetMode(NM_DedicatedServer))
+	{
+		if (USignificanceManager* SignificanceManager = FSignificanceManagerModule::Get(GetWorld()))
+		{
+			auto Significance = [&](USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint) -> float
+			{
+				return SignificanceFunction(ObjectInfo, Viewpoint);
+			};
+
+			auto PostSignificance = [&](USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSignificance, float Significance, bool bFinal)
+			{
+				PostSignificanceFunction(ObjectInfo, OldSignificance, Significance, bFinal);
+			};
+
+			SignificanceManager->RegisterObject(this, TEXT("Character"), Significance, USignificanceManager::EPostSignificanceType::Sequential, PostSignificance);
+		}
+		
+	}
+}
+
+float ACubeAnimalCharacter::GetSignificanceByDistance(float Distance)
+{
+	const int32 NumThresholds = SignificanceThresholds.Num();
+	if (Distance >= SignificanceThresholds[NumThresholds - 1].MaxDistance)
+	{
+		return SignificanceThresholds[NumThresholds - 1].Significance;
+	}
+	else
+	{
+		for (int32 Idx = 0; Idx < NumThresholds; Idx++)
+		{
+			FSignificanceThresholds& Thresholds = SignificanceThresholds[Idx];
+			if (Distance <= Thresholds.MaxDistance)
+			{
+				return Thresholds.Significance;
+			}
+		}
+	}
+
+	return 0.f;
+}
+
+float ACubeAnimalCharacter::GetSignificanceByDot(float Dot) const
+{
+	return Dot > DotSignificance;
+}
+
+void ACubeAnimalCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (!IsNetMode(NM_DedicatedServer))
+	{
+		if (USignificanceManager* SignificanceManager = FSignificanceManagerModule::Get(GetWorld()))
+		{
+			SignificanceManager->UnregisterObject(this);
+		}
+	}
 }
 
 void ACubeAnimalCharacter::OnRep_PlayerState()

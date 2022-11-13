@@ -7,6 +7,7 @@
 #include "GameplayAbilitySpec.h"
 #include "GameplaySystemInfo.h"
 #include "GenericTeamAgentInterface.h"
+#include "SignificanceManager.h"
 #include "GameFramework/Character.h"
 #include "CubeAnimalCharacter.generated.h"
 
@@ -14,6 +15,19 @@ class UCubeGameplayAbility;
 class UGameplayAbility;
 class UAttributeSetBase;
 class UAbilitySystemComponent;
+
+USTRUCT(BlueprintType)
+struct FSignificanceThresholds
+{
+	GENERATED_BODY()
+
+	FSignificanceThresholds() { Significance = 0; MaxDistance = 0; }
+	FSignificanceThresholds(float InSignificance, float InMaxDistance) : Significance(InSignificance), MaxDistance(InMaxDistance) { }
+	UPROPERTY(EditAnywhere)
+	float Significance;
+	UPROPERTY(EditAnywhere)
+	float MaxDistance;
+};
 
 UCLASS(config=Game)
 class ACubeAnimalCharacter : public ACharacter, public IGenericTeamAgentInterface, public IAbilitySystemInterface
@@ -27,7 +41,7 @@ class ACubeAnimalCharacter : public ACharacter, public IGenericTeamAgentInterfac
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
-	
+
 public:
 	ACubeAnimalCharacter();
 
@@ -125,5 +139,25 @@ public:
 	TSubclassOf<class UGameplayEffect> DefaultAttributes;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	// Significance Functions
+	float SignificanceFunction(USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint);
+	
+	void PostSignificanceFunction(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSignificance, float Significance, bool bFinal);
+
+	UPROPERTY(EditAnywhere, Category = "Signifcance")
+	TArray<FSignificanceThresholds> SignificanceThresholds;
+
+	UPROPERTY(EditAnywhere, Category = "Signifcance")
+	float DotSignificance;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void PostSignificance(float OldSignificance, float Significance);
+
+	float GetSignificanceByDistance(float Distance);
+
+	float GetSignificanceByDot(float Dot) const;
+	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };
 
