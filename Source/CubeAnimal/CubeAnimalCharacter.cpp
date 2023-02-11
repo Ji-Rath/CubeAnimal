@@ -374,6 +374,8 @@ void ACubeAnimalCharacter::AddCharacterAbilities()
 	{
 		return;
 	}
+	AbilitySystemComponent->ClearAllAbilities();
+	
 	for (TSubclassOf<UCubeGameplayAbility>& StartupAbility : CharacterAbilities)
 	{
 		EGDAbilityInputID InputID = StartupAbility.GetDefaultObject()->AbilityInputID;
