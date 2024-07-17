@@ -22,7 +22,7 @@ void UCubeGameViewportClient::Tick(float DeltaTime)
 		}
 		else
 		{
-			if (USignificanceManager* SignificanceManager = FSignificanceManagerModule::Get(World))
+			if (USignificanceManager* SignificanceManager = USignificanceManager::Get(World))
 			{
 				FVector ViewLocation;
 				FRotator ViewRotation;

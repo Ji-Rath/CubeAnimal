@@ -149,7 +149,7 @@ void ACubeAnimalCharacter::BeginPlay()
 
 	if (!IsNetMode(NM_DedicatedServer))
 	{
-		if (USignificanceManager* SignificanceManager = FSignificanceManagerModule::Get(GetWorld()))
+		if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
 		{
 			auto Significance = [&](USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint) -> float
 			{
@@ -200,7 +200,7 @@ void ACubeAnimalCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	if (!IsNetMode(NM_DedicatedServer))
 	{
-		if (USignificanceManager* SignificanceManager = FSignificanceManagerModule::Get(GetWorld()))
+		if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
 		{
 			SignificanceManager->UnregisterObject(this);
 		}
